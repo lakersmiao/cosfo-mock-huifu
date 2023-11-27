@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: cosfo-mall
+  profiles:
+    active: dev
+logging:
+  level:
+    root: info
+    org.springframework: INFO
+    org.mybatis: INFO
+    com.cosfo.mall: INFO
+  pattern:
+    console: "%d - %msg%n"
+server:
+  port: 8888
+# 日志文件路径
+log-path: ${APP_LOG_DIR:./log}

@@ -1,0 +1,39 @@
+logging:
+  level:
+    root: info
+    org.springframework: INFO
+    org.mybatis: INFO
+    com.cosfo.mall: INFO
+  pattern:
+    console: "%d - %msg%n"
+server:
+  port: 8888
+# 日志文件路径
+log-path: ${APP_LOG_DIR:./log}
+
+# 数据库配置
+spring:
+  application:
+    name: cosfo-mock-huifu
+  datasource:
+    hikari:
+      minimum-idle: 3
+      maximum-pool-size: 10
+      max-lifetime: 30000   #不能小于30秒，否则默认回到1800秒
+      connection-test-query: SELECT 1
+    username: dev
+    password: xianmu619
+    #?serverTimezone=UTC解决时区的报错
+    url: jdbc:mysql://mysql-8.summerfarm.net:3307/cosfodb?useSSL=false&serverTimezone=GMT%2B8&characterEncoding=utf-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 自定义数据源
+    type: com.alibaba.druid.pool.DruidDataSource
+    #druid 数据源专有配置
+    initialSize: 5
+    minIdle: 5
+    maxActive: 80
+    maxWait: 60000
+    timeBetweenEvictionRunsMillis: 60000
+    minEvictableIdleTimeMillis: 300000
+
+
