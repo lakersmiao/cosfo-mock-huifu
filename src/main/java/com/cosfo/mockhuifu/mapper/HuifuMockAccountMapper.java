@@ -3,6 +3,9 @@ package com.cosfo.mockhuifu.mapper;
 import com.cosfo.mockhuifu.model.po.HuiFuMockAccount;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -15,4 +18,10 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface HuifuMockAccountMapper extends BaseMapper<HuiFuMockAccount> {
 
+    /**
+     * 更新延迟金额
+     * @param huiFuId
+     * @param increaseDelayedAmt
+     */
+    int increaseDelayedAmt(@Param("id") String huiFuId, @Param("increaseDelayedAmt") BigDecimal increaseDelayedAmt);
 }

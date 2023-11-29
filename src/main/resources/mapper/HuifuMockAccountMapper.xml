@@ -2,4 +2,9 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.cosfo.mockhuifu.mapper.HuifuMockAccountMapper">
 
+    <update id="increaseDelayedAmt">
+        update huifu_mock_account
+        set delayed_amt = delayed_amt + #{increaseDelayedAmt}
+        where huifu_id = #{id} and delayed_amt + #{increaseDelayedAmt} >= 0
+    </update>
 </mapper>

@@ -6,6 +6,9 @@ import com.cosfo.mockhuifu.repository.HuifuMockAccountRepository;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+import java.math.BigDecimal;
+
 /**
  * <p>
  * 汇付模拟账户 服务实现类
@@ -17,4 +20,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class HuifuMockAccountRepositoryImpl extends ServiceImpl<HuifuMockAccountMapper, HuiFuMockAccount> implements HuifuMockAccountRepository {
 
+    @Resource
+    private HuifuMockAccountMapper huiFuMockAccountMapper;
+
+    @Override
+    public int increaseDelayedAmt(String huiFuId, BigDecimal increaseDelayedAmt) {
+        return huiFuMockAccountMapper.increaseDelayedAmt(huiFuId, increaseDelayedAmt);
+    }
 }

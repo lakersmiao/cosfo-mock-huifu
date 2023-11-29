@@ -11,7 +11,11 @@ import com.cosfo.mockhuifu.model.dto.request.HuiFuPayRequestDTO;
 import com.cosfo.mockhuifu.model.dto.request.HuiFuRequestDTO;
 import com.cosfo.mockhuifu.model.dto.resp.HuiFuPayResponseDTO;
 import com.cosfo.mockhuifu.model.dto.resp.HuiFuResponseDTO;
+import com.cosfo.mockhuifu.model.po.HuiFuMockAccount;
 import com.cosfo.mockhuifu.model.po.HuiFuMockPayment;
+import com.cosfo.mockhuifu.model.po.HuiFuMockTransactionSummary;
+import com.cosfo.mockhuifu.repository.HuiFuMockTransactionSummaryRepository;
+import com.cosfo.mockhuifu.repository.HuifuMockAccountRepository;
 import com.cosfo.mockhuifu.repository.HuifuMockPaymentRepository;
 import com.cosfo.mockhuifu.service.MockService;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +25,8 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.util.Objects;
 
 /**
  * @description: 模拟业务层
@@ -35,6 +41,10 @@ public class MockServiceImpl implements MockService {
     private HuifuMockPaymentRepository huifuMockPaymentRepository;
     @Resource
     private PlatformTransactionManager transactionManager;
+    @Resource
+    private HuifuMockAccountRepository huifuMockAccountRepository;
+    @Resource
+    private HuiFuMockTransactionSummaryRepository huiFuMockTransactionSummaryRepository;
 
     @Override
     public String mockJsApi(HuiFuRequestDTO<HuiFuPayRequestDTO> payRequestDTO) {
@@ -75,12 +85,29 @@ public class MockServiceImpl implements MockService {
             throw new RuntimeException("更新支付单状态失败");
         }
 
-        // 3、给cosfo-mall回调
+        // 3、给mall回调
         //TODO：George 2023/11/29 回调逻辑待补充
     }
 
     private void processAccountLogic(Long paymentId) {
-        //TODO：George 2023/11/29 总账户金额更新、支付单维度的金额更新
+        HuiFuMockPayment huiFuMockPayment = huifuMockPaymentRepository.getById(paymentId);
+        String huiFuId = huiFuMockPayment.getHuiFuId();
+
+        // 1、汇付账户金额增加
+        int increaseResult = huifuMockAccountRepository.increaseDelayedAmt(huiFuId, huiFuMockPayment.getTransAmt());
+        if (increaseResult < 1) {
+            throw new RuntimeException("更新汇付延迟账户金额失败");
+        }
+        log.info("汇付延迟账户：{}，增加金额：{}", huiFuId, huiFuMockPayment.getTransAmt());
+
+        // 2、汇付模拟的交易汇总金额增加
+        HuiFuMockTransactionSummary summary = new HuiFuMockTransactionSummary();
+        summary.setOrgReqSeqId(huiFuMockPayment.getReqSeqId());
+        summary.setOrgAmt(huiFuMockPayment.getTransAmt());
+        summary.setDelayedAmt(huiFuMockPayment.getTransAmt());
+        summary.setConfirmedAmt(BigDecimal.ZERO);
+        summary.setRefundAmt(BigDecimal.ZERO);
+        huiFuMockTransactionSummaryRepository.save(summary);
     }
 
     private void sendMQForMockUserPaySuccessNotify(Long paymentId) {

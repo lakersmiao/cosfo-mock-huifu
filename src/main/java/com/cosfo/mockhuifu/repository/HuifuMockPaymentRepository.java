@@ -3,6 +3,8 @@ package com.cosfo.mockhuifu.repository;
 import com.cosfo.mockhuifu.model.po.HuiFuMockPayment;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.math.BigDecimal;
+
 /**
  * <p>
  * 汇付模拟支付单 服务类
