@@ -6,6 +6,8 @@ import com.cosfo.mockhuifu.repository.HuifuMockPaymentRepository;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 汇付模拟支付单 服务实现类
@@ -17,4 +19,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class HuifuMockPaymentRepositoryImpl extends ServiceImpl<HuifuMockPaymentMapper, HuifuMockPayment> implements HuifuMockPaymentRepository {
 
+    @Resource
+    private HuifuMockPaymentMapper huifuMockPaymentMapper;
+
+    @Override
+    public int updateStatusById(Long id, String orgStat, String finalStat) {
+        return huifuMockPaymentMapper.updateStatusById(id, orgStat, finalStat);
+    }
 }

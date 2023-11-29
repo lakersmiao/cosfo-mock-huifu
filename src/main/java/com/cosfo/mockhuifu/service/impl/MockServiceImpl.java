@@ -1,5 +1,7 @@
 package com.cosfo.mockhuifu.service.impl;
 
+import cn.hutool.core.thread.ExecutorBuilder;
+import cn.hutool.core.thread.ThreadUtil;
 import com.alibaba.fastjson.JSON;
 import com.cosfo.mockhuifu.common.constant.HuiFuConstant;
 import com.cosfo.mockhuifu.common.enums.DelayAcctFlagEnum;
@@ -13,6 +15,7 @@ import com.cosfo.mockhuifu.model.dto.resp.HuiFuPayResponseDTO;
 import com.cosfo.mockhuifu.model.dto.resp.HuiFuResponseDTO;
 import com.cosfo.mockhuifu.model.po.HuifuMockPayment;
 import com.cosfo.mockhuifu.repository.HuifuMockPaymentRepository;
+import com.cosfo.mockhuifu.service.HuiFuMockPaymentService;
 import com.cosfo.mockhuifu.service.MockService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import javax.annotation.Resource;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @description: 模拟业务层
@@ -47,14 +51,56 @@ public class MockServiceImpl implements MockService {
         HuiFuResponseDTO<HuiFuPayResponseDTO> huiFuResponseDTO = assemblyMockResponse(payRequestDTO);
 
         // 3、插入模拟支付表
-        insertMockPayment(payRequestDTO.getData(), huiFuResponseDTO.getData());
+        Long paymentId = insertMockPayment(payRequestDTO.getData(), huiFuResponseDTO.getData());
 
         // 4、返回结果
         String response = JSON.toJSONString(huiFuResponseDTO);
         log.info("处理模拟支付请求完毕，返回结果为：{}", response);
 
-        // 5、定时任务扫描5s的支付单，模拟用户在这个时间段内完成了支付操作，进行下一步的金额增减且回调cosfo-mall
+        // 5、异步处理模拟用户支付成功后的通知
+        ThreadUtil.execAsync(() -> {
+            asyncMockUserPaySuccessNotify(paymentId);
+        });
         return response;
+    }
+
+
+    private void asyncMockUserPaySuccessNotify(Long paymentId) {
+        log.info("支付单：{}，等待用户支付中...", paymentId);
+        // 这里简单睡3s，用于模拟用户支付的时间，和真实的支付间隔尽量保持一致
+        ThreadUtil.sleep(3000);
+        log.info("支付单：{}，用户支付完毕...", paymentId);
+
+        // 1、账户逻辑的处理
+        processAccountLogic(paymentId);
+
+        // 2、更改支付单的状态
+        int updateStatResult = huifuMockPaymentRepository.updateStatusById(paymentId, TransStatEnum.PROCESSING.getStat(), TransStatEnum.SUCCESS.getStat());
+        if (updateStatResult < 1) {
+            throw new RuntimeException("更新支付单状态失败");
+        }
+
+        // 3、给cosfo-mall回调
+        //TODO：George 2023/11/29 回调逻辑待补充
+    }
+
+    private void processAccountLogic(Long paymentId) {
+        //TODO：George 2023/11/29 总账户金额更新、支付单维度的金额更新
+    }
+
+    private void sendMQForMockUserPaySuccessNotify(Long paymentId) {
+        // 因为测试环境的延迟消息等级是30s、1min起步，真实用户也就三五秒支付完毕有回调通知
+        // 这里简单处理睡3s，然后发送MQ消息
+        log.info("支付单：{}，等待用户支付中...", paymentId);
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            log.error("睡眠异常", e);
+        }
+        log.info("支付单：{}，用户支付完毕，", paymentId);
+
+
+
     }
 
     /**

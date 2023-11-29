@@ -13,4 +13,12 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface HuifuMockPaymentRepository extends IService<HuifuMockPayment> {
 
+    /**
+     * 根据id更新状态
+     * @param paymentId
+     * @param orgStat
+     * @param finalStat
+     * @return
+     */
+    int updateStatusById(Long paymentId, String orgStat, String finalStat);
 }
