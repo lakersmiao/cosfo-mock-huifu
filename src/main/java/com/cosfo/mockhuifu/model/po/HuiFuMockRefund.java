@@ -20,8 +20,8 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@TableName("huifu_mock_refund")
-public class HuifuMockRefund implements Serializable {
+@TableName("hui_fu_mock_refund")
+public class HuiFuMockRefund implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -47,7 +47,7 @@ public class HuifuMockRefund implements Serializable {
      * 汇付id
      */
     @TableField("huifu_id")
-    private String huifuId;
+    private String huiFuId;
 
     /**
      * 退款金额

@@ -1,6 +1,6 @@
 package com.cosfo.mockhuifu.mapper;
 
-import com.cosfo.mockhuifu.model.po.HuifuMockAccount;
+import com.cosfo.mockhuifu.model.po.HuiFuMockAccount;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -13,6 +13,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2023-11-29
  */
 @Mapper
-public interface HuifuMockAccountMapper extends BaseMapper<HuifuMockAccount> {
+public interface HuifuMockAccountMapper extends BaseMapper<HuiFuMockAccount> {
 
 }

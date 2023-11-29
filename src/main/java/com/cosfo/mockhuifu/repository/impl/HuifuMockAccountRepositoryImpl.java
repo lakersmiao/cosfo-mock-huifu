@@ -1,6 +1,6 @@
 package com.cosfo.mockhuifu.repository.impl;
 
-import com.cosfo.mockhuifu.model.po.HuifuMockAccount;
+import com.cosfo.mockhuifu.model.po.HuiFuMockAccount;
 import com.cosfo.mockhuifu.mapper.HuifuMockAccountMapper;
 import com.cosfo.mockhuifu.repository.HuifuMockAccountRepository;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -15,6 +15,6 @@ import org.springframework.stereotype.Service;
  * @since 2023-11-29
  */
 @Service
-public class HuifuMockAccountRepositoryImpl extends ServiceImpl<HuifuMockAccountMapper, HuifuMockAccount> implements HuifuMockAccountRepository {
+public class HuifuMockAccountRepositoryImpl extends ServiceImpl<HuifuMockAccountMapper, HuiFuMockAccount> implements HuifuMockAccountRepository {
 
 }

@@ -1,6 +1,6 @@
 package com.cosfo.mockhuifu.repository;
 
-import com.cosfo.mockhuifu.model.po.HuifuMockAccount;
+import com.cosfo.mockhuifu.model.po.HuiFuMockAccount;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
@@ -11,6 +11,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
  * @author George
  * @since 2023-11-29
  */
-public interface HuifuMockAccountRepository extends IService<HuifuMockAccount> {
+public interface HuifuMockAccountRepository extends IService<HuiFuMockAccount> {
 
 }

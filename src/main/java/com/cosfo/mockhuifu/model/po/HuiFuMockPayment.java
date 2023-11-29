@@ -22,8 +22,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("huifu_mock_payment")
-public class HuifuMockPayment implements Serializable {
+@TableName("hui_fu_mock_payment")
+public class HuiFuMockPayment implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -55,7 +55,7 @@ public class HuifuMockPayment implements Serializable {
      * 汇付id
      */
     @TableField("huifu_id")
-    private String huifuId;
+    private String huiFuId;
 
     /**
      * 支付类型 T_JSAPI: 微信公众号

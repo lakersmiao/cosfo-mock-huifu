@@ -19,8 +19,8 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@TableName("huifu_mock_account")
-public class HuifuMockAccount implements Serializable {
+@TableName("hui_fu_mock_account")
+public class HuiFuMockAccount implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -28,7 +28,7 @@ public class HuifuMockAccount implements Serializable {
      * 汇付id
      */
     @TableId("huifu_id")
-    private String huifuId;
+    private String huiFuId;
 
     /**
      * 基本户金额

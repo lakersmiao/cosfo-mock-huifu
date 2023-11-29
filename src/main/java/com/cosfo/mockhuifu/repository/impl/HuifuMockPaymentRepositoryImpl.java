@@ -1,6 +1,6 @@
 package com.cosfo.mockhuifu.repository.impl;
 
-import com.cosfo.mockhuifu.model.po.HuifuMockPayment;
+import com.cosfo.mockhuifu.model.po.HuiFuMockPayment;
 import com.cosfo.mockhuifu.mapper.HuifuMockPaymentMapper;
 import com.cosfo.mockhuifu.repository.HuifuMockPaymentRepository;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -17,7 +17,7 @@ import javax.annotation.Resource;
  * @since 2023-11-29
  */
 @Service
-public class HuifuMockPaymentRepositoryImpl extends ServiceImpl<HuifuMockPaymentMapper, HuifuMockPayment> implements HuifuMockPaymentRepository {
+public class HuifuMockPaymentRepositoryImpl extends ServiceImpl<HuifuMockPaymentMapper, HuiFuMockPayment> implements HuifuMockPaymentRepository {
 
     @Resource
     private HuifuMockPaymentMapper huifuMockPaymentMapper;

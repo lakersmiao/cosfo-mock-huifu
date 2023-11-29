@@ -1,6 +1,5 @@
 package com.cosfo.mockhuifu.service.impl;
 
-import cn.hutool.core.thread.ExecutorBuilder;
 import cn.hutool.core.thread.ThreadUtil;
 import com.alibaba.fastjson.JSON;
 import com.cosfo.mockhuifu.common.constant.HuiFuConstant;
@@ -8,24 +7,20 @@ import com.cosfo.mockhuifu.common.enums.DelayAcctFlagEnum;
 import com.cosfo.mockhuifu.common.enums.ResponseCodeEnum;
 import com.cosfo.mockhuifu.common.enums.TransStatEnum;
 import com.cosfo.mockhuifu.common.utils.HuiFuGenerateSeqIdUtil;
-import com.cosfo.mockhuifu.mapper.HuifuMockPaymentMapper;
 import com.cosfo.mockhuifu.model.dto.request.HuiFuPayRequestDTO;
 import com.cosfo.mockhuifu.model.dto.request.HuiFuRequestDTO;
 import com.cosfo.mockhuifu.model.dto.resp.HuiFuPayResponseDTO;
 import com.cosfo.mockhuifu.model.dto.resp.HuiFuResponseDTO;
-import com.cosfo.mockhuifu.model.po.HuifuMockPayment;
+import com.cosfo.mockhuifu.model.po.HuiFuMockPayment;
 import com.cosfo.mockhuifu.repository.HuifuMockPaymentRepository;
-import com.cosfo.mockhuifu.service.HuiFuMockPaymentService;
 import com.cosfo.mockhuifu.service.MockService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import javax.annotation.Resource;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * @description: 模拟业务层
@@ -112,11 +107,11 @@ public class MockServiceImpl implements MockService {
         DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         TransactionStatus status = transactionManager.getTransaction(def);
         try {
-            HuifuMockPayment huifuMockPayment = HuifuMockPayment.builder()
+            HuiFuMockPayment huifuMockPayment = HuiFuMockPayment.builder()
                     .reqDate(responseData.getReqDate())
                     .reqSeqId(requestData.getReqSeqId())
                     .transStat(responseData.getTransStat())
-                    .huifuId(responseData.getHuifuId())
+                    .huiFuId(responseData.getHuifuId())
                     .tradeType(responseData.getTradeType())
                     .transAmt(responseData.getTransAmt())
                     .timeExpire(requestData.getTimeExpire())
