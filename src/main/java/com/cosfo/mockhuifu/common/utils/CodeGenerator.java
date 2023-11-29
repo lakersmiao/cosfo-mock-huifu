@@ -49,7 +49,7 @@ public class CodeGenerator {
                             .pathInfo(Collections.singletonMap(OutputFile.mapperXml,System.getProperty("user.dir")  + "/src/main/resources/mapper")); // 设置mapperXml生成路径
                 })
                 .strategyConfig(builder -> {
-                    builder.addInclude("huifu_mock_refund") // 设置需要生成的表名
+                    builder.addInclude("hui_fu_mock_transaction_summary") // 设置需要生成的表名
                             .addTablePrefix("m_") // 设置过滤表前缀
                             .serviceBuilder()// service策略配置
                             .formatServiceFileName("%sRepository")//   格式化 service 接口文件名称
