@@ -46,6 +46,12 @@ public class HuiFuMockPayment implements Serializable {
     private String reqSeqId;
 
     /**
+     * 全局流水号
+     */
+    @TableField("hf_seq_id")
+    private String hfSeqId;
+
+    /**
      * P、处理中 S、成功 F、失败
      */
     @TableField("trans_stat")

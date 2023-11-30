@@ -1,14 +1,17 @@
 package com.cosfo.mockhuifu.service.impl;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import com.alibaba.fastjson.JSON;
 import com.cosfo.mockhuifu.common.constant.HuiFuConstant;
 import com.cosfo.mockhuifu.common.enums.DelayAcctFlagEnum;
+import com.cosfo.mockhuifu.common.enums.FeeFlagEnum;
 import com.cosfo.mockhuifu.common.enums.ResponseCodeEnum;
 import com.cosfo.mockhuifu.common.enums.TransStatEnum;
 import com.cosfo.mockhuifu.common.utils.HuiFuGenerateSeqIdUtil;
 import com.cosfo.mockhuifu.model.dto.request.HuiFuPayRequestDTO;
 import com.cosfo.mockhuifu.model.dto.request.HuiFuRequestDTO;
+import com.cosfo.mockhuifu.model.dto.resp.HuiFuPayCallbackDTO;
 import com.cosfo.mockhuifu.model.dto.resp.HuiFuPayResponseDTO;
 import com.cosfo.mockhuifu.model.dto.resp.HuiFuResponseDTO;
 import com.cosfo.mockhuifu.model.po.HuiFuMockAccount;
@@ -26,6 +29,8 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
@@ -77,7 +82,8 @@ public class MockServiceImpl implements MockService {
         log.info("支付单：{}，用户支付完毕...", paymentId);
 
         // 1、账户逻辑的处理
-        processAccountLogic(paymentId);
+        HuiFuMockPayment huiFuMockPayment = huifuMockPaymentRepository.getById(paymentId);
+        processAccountLogic(huiFuMockPayment);
 
         // 2、更改支付单的状态
         int updateStatResult = huifuMockPaymentRepository.updateStatusById(paymentId, TransStatEnum.PROCESSING.getStat(), TransStatEnum.SUCCESS.getStat());
@@ -86,11 +92,54 @@ public class MockServiceImpl implements MockService {
         }
 
         // 3、给mall回调
-        //TODO：George 2023/11/29 回调逻辑待补充
+        callbackMall(huiFuMockPayment);
     }
 
-    private void processAccountLogic(Long paymentId) {
-        HuiFuMockPayment huiFuMockPayment = huifuMockPaymentRepository.getById(paymentId);
+    private void callbackMall(HuiFuMockPayment huiFuMockPayment) {
+        // 组装好回调的参数
+        HuiFuPayCallbackDTO huiFuPayCallbackDTO = assemblyMockCallbackDTO(huiFuMockPayment);
+        // 调用回调地址
+
+    }
+
+    private HuiFuPayCallbackDTO assemblyMockCallbackDTO(HuiFuMockPayment huiFuMockPayment) {
+        // 手续费先硬编码成千23
+        BigDecimal feeRate = BigDecimal.valueOf(0.023);
+        BigDecimal feeAmt = huiFuMockPayment.getTransAmt().multiply(feeRate).setScale(2, RoundingMode.HALF_UP);
+        return HuiFuPayCallbackDTO.builder()
+                .acctId(HuiFuConstant.ACCT_ID)
+                .acctSplitBunch(null)
+                .feeAcctId(HuiFuConstant.ACCT_ID)
+                .feeHuifuId(huiFuMockPayment.getHuiFuId())
+                .feeAmount(feeAmt.toPlainString())
+                .bankType("OTHERS")
+                .bankCode("SUCCESS")
+                .bankMessage("交易成功")
+                .combinedPayData(null)
+                .combinedPayFeeAmt(null)
+                .delayAcctFlag(DelayAcctFlagEnum.DELAY.getFlag())
+                .endTime(DateUtil.format(LocalDateTime.now(), "yyyyMMddHHmmss"))
+                .feeFlag(FeeFlagEnum.INNER_BUCKLE.getFlag())
+                .hfSeqId(huiFuMockPayment.getHfSeqId())
+                .huifuId(huiFuMockPayment.getHuiFuId())
+                .isDelayAcct(DelayAcctFlagEnum.DELAY.getFlag())
+                .isDiv("N")
+                .outTransId("4200001974202311305397932158")
+                .partyOrderId("03232311303397044709485")
+                .reqDate(huiFuMockPayment.getReqDate())
+                .reqSeqId(huiFuMockPayment.getReqSeqId())
+                .respCode(ResponseCodeEnum.MOCK_JSAPI_CALLBACK_SUCCESS.getCode())
+                .respDesc(ResponseCodeEnum.MOCK_JSAPI_CALLBACK_SUCCESS.getDesc())
+                .settlementAmt(null)
+                .tradeType(huiFuMockPayment.getTradeType())
+                .transAmt(huiFuMockPayment.getTransAmt().toPlainString())
+                .transFeeAllowanceInfo(null)
+                .transStat(TransStatEnum.SUCCESS.getStat())
+                .transType(huiFuMockPayment.getTradeType())
+                .wxResponse(null).build();
+    }
+
+    private void processAccountLogic(HuiFuMockPayment huiFuMockPayment) {
         String huiFuId = huiFuMockPayment.getHuiFuId();
 
         // 1、汇付账户金额增加
@@ -137,6 +186,7 @@ public class MockServiceImpl implements MockService {
             HuiFuMockPayment huifuMockPayment = HuiFuMockPayment.builder()
                     .reqDate(responseData.getReqDate())
                     .reqSeqId(requestData.getReqSeqId())
+                    .hfSeqId(responseData.getHfSeqId())
                     .transStat(responseData.getTransStat())
                     .huiFuId(responseData.getHuifuId())
                     .tradeType(responseData.getTradeType())
