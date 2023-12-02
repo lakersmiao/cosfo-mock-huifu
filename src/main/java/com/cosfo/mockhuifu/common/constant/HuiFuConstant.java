@@ -15,7 +15,7 @@ public class HuiFuConstant {
     /**
      * 汇付全局流水号前缀
      */
-    public static final String HF_JSAPI_SEQ_ID_PREFIX = "002900";
+    public static final String HF_JSAPI_SEQ_ID_PREFIX = "MK002900";
 
     /**
      * 收款账户号
