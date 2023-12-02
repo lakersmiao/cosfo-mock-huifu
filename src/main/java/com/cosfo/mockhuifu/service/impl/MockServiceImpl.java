@@ -67,7 +67,7 @@ public class MockServiceImpl implements MockService {
     private Integer maxRetryCnt;
 
     @Override
-    public String mockJsApi(HuiFuRequestDTO<HuiFuPayRequestDTO> payRequestDTO) {
+    public HuiFuResponseDTO mockJsApi(HuiFuRequestDTO<HuiFuPayRequestDTO> payRequestDTO) {
         log.info("接收到模拟支付请求，请求参数为：{}", payRequestDTO);
         // 1、参数校验
         //TODO：George 2023/11/29 前期先不做，仅是测试环境模拟

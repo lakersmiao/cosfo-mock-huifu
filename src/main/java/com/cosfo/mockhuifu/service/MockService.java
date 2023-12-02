@@ -2,6 +2,7 @@ package com.cosfo.mockhuifu.service;
 
 import com.cosfo.mockhuifu.model.dto.request.HuiFuPayRequestDTO;
 import com.cosfo.mockhuifu.model.dto.request.HuiFuRequestDTO;
+import com.cosfo.mockhuifu.model.dto.resp.HuiFuResponseDTO;
 
 /**
  * @description: 模拟业务层
@@ -15,6 +16,6 @@ public interface MockService {
      * @param payRequestDTO
      * @return
      */
-    String mockJsApi(HuiFuRequestDTO<HuiFuPayRequestDTO> payRequestDTO);
+    HuiFuResponseDTO mockJsApi(HuiFuRequestDTO<HuiFuPayRequestDTO> payRequestDTO);
 
 }
