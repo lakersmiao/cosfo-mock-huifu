@@ -10,9 +10,10 @@ import com.cosfo.mockhuifu.common.constant.HuiFuConstant;
  **/
 public class HuiFuGenerateSeqIdUtil {
 
-    public static String generateJsapiSeqId() {
+    public static String generateHfSeqId() {
         String hfJsapiSeqIdPrefix = HuiFuConstant.HF_JSAPI_SEQ_ID_PREFIX;
         String randomString = RandomUtil.randomString(RandomUtil.BASE_CHAR_NUMBER, 33);
         return hfJsapiSeqIdPrefix + randomString;
     }
+
 }

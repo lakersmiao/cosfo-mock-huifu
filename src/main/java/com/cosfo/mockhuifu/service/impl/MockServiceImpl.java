@@ -1,37 +1,44 @@
 package com.cosfo.mockhuifu.service.impl;
 
-import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.thread.ThreadUtil;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
+import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
 import com.cosfo.mockhuifu.common.constant.HuiFuConstant;
 import com.cosfo.mockhuifu.common.enums.DelayAcctFlagEnum;
-import com.cosfo.mockhuifu.common.enums.FeeFlagEnum;
 import com.cosfo.mockhuifu.common.enums.ResponseCodeEnum;
 import com.cosfo.mockhuifu.common.enums.TransStatEnum;
 import com.cosfo.mockhuifu.common.utils.HuiFuGenerateSeqIdUtil;
 import com.cosfo.mockhuifu.model.dto.request.HuiFuPayRequestDTO;
 import com.cosfo.mockhuifu.model.dto.request.HuiFuRequestDTO;
-import com.cosfo.mockhuifu.model.dto.resp.HuiFuPayCallbackDTO;
+import com.cosfo.mockhuifu.model.dto.resp.HuiFuBaseResponseDTO;
+import com.cosfo.mockhuifu.model.dto.resp.HuiFuPayCallbackResponseDTO;
 import com.cosfo.mockhuifu.model.dto.resp.HuiFuPayResponseDTO;
 import com.cosfo.mockhuifu.model.dto.resp.HuiFuResponseDTO;
-import com.cosfo.mockhuifu.model.po.HuiFuMockAccount;
 import com.cosfo.mockhuifu.model.po.HuiFuMockPayment;
 import com.cosfo.mockhuifu.model.po.HuiFuMockTransactionSummary;
 import com.cosfo.mockhuifu.repository.HuiFuMockTransactionSummaryRepository;
 import com.cosfo.mockhuifu.repository.HuifuMockAccountRepository;
 import com.cosfo.mockhuifu.repository.HuifuMockPaymentRepository;
 import com.cosfo.mockhuifu.service.MockService;
+import com.github.rholder.retry.RetryerBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.entity.ContentType;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
-import java.util.Objects;
+import java.util.Map;
 
 /**
  * @description: 模拟业务层
@@ -50,6 +57,11 @@ public class MockServiceImpl implements MockService {
     private HuifuMockAccountRepository huifuMockAccountRepository;
     @Resource
     private HuiFuMockTransactionSummaryRepository huiFuMockTransactionSummaryRepository;
+    @Resource
+    private TransactionTemplate transactionTemplate;
+
+    @Value("${callback.maxRetryCnt}")
+    private Integer maxRetryCnt;
 
     @Override
     public String mockJsApi(HuiFuRequestDTO<HuiFuPayRequestDTO> payRequestDTO) {
@@ -75,68 +87,154 @@ public class MockServiceImpl implements MockService {
     }
 
 
-    private void asyncMockUserPaySuccessNotify(Long paymentId) {
+    public void asyncMockUserPaySuccessNotify(Long paymentId) {
         log.info("支付单：{}，等待用户支付中...", paymentId);
         // 这里简单睡3s，用于模拟用户支付的时间，和真实的支付间隔尽量保持一致
         ThreadUtil.sleep(3000);
         log.info("支付单：{}，用户支付完毕...", paymentId);
 
-        // 1、账户逻辑的处理
         HuiFuMockPayment huiFuMockPayment = huifuMockPaymentRepository.getById(paymentId);
-        processAccountLogic(huiFuMockPayment);
+        // 事务提交
+        transactionTemplate.execute(status -> {
+            Boolean result = true;
+            try {
+                // 1、账户逻辑的处理
+                processAccountLogic(huiFuMockPayment);
 
-        // 2、更改支付单的状态
-        int updateStatResult = huifuMockPaymentRepository.updateStatusById(paymentId, TransStatEnum.PROCESSING.getStat(), TransStatEnum.SUCCESS.getStat());
-        if (updateStatResult < 1) {
-            throw new RuntimeException("更新支付单状态失败");
-        }
+                // 2、更改支付单的状态
+                int updateStatResult = huifuMockPaymentRepository.updateStatusById(paymentId, TransStatEnum.PROCESSING.getStat(), TransStatEnum.SUCCESS.getStat());
+                if (updateStatResult < 1) {
+                    throw new RuntimeException("更新支付单状态失败");
+                }
+            } catch (Exception e) {
+                log.error("模拟用户支付成功后的通知异常", e);
+                status.setRollbackOnly();
+                result = false;
+            }
+            return result;
+        });
 
-        // 3、给mall回调
-        callbackMall(huiFuMockPayment);
+        // 3、异步给mall回调
+        ThreadUtil.execAsync(() -> callbackMall(huiFuMockPayment));
     }
 
     private void callbackMall(HuiFuMockPayment huiFuMockPayment) {
         // 组装好回调的参数
-        HuiFuPayCallbackDTO huiFuPayCallbackDTO = assemblyMockCallbackDTO(huiFuMockPayment);
-        // 调用回调地址
+        HuiFuBaseResponseDTO huiFuBaseResponseDTO = assemblyMockCallbackDTO(huiFuMockPayment);
 
+        // 做个简易的回调重试 默认最多重试两次 间隔三秒
+        RetryerBuilder<Boolean> retryerBuilder = RetryerBuilder.<Boolean>newBuilder()
+                .retryIfResult(BooleanUtils::isFalse)
+                .withStopStrategy(attempt -> attempt.getAttemptNumber() > maxRetryCnt)
+                .withWaitStrategy(attempt -> 3000L);
+        try {
+            retryerBuilder.build().call(() ->
+                sendCallbackPostRequest(huiFuMockPayment, huiFuBaseResponseDTO)
+            );
+        } catch (Exception e) {
+            log.error("模拟支付回调商城异常", e);
+        }
     }
 
-    private HuiFuPayCallbackDTO assemblyMockCallbackDTO(HuiFuMockPayment huiFuMockPayment) {
+    /**
+     * 发送回调请求
+     *
+     * @param huiFuMockPayment
+     * @param huiFuBaseResponseDTO
+     * @return
+     */
+    private Boolean sendCallbackPostRequest(HuiFuMockPayment huiFuMockPayment, HuiFuBaseResponseDTO huiFuBaseResponseDTO) {
+        Map<String, Object> responseData = BeanUtil.beanToMap(huiFuBaseResponseDTO, true, true);
+        HttpResponse response = HttpRequest.post(huiFuMockPayment.getNotifyUrl())
+                .form(responseData)
+                .execute();
+        String callBackResponse = response.body();
+        Boolean callBackSuccess = StringUtils.equals(callBackResponse, HuiFuConstant.JSAPI_CALLBACK_SUCCESS_PREFIX + huiFuMockPayment.getReqSeqId());
+        log.info("模拟支付单：{}，回调商城：{}，返回参数：{}", huiFuMockPayment.getReqSeqId(), callBackSuccess ? "成功" : "失败", callBackResponse);
+        return callBackSuccess;
+    }
+
+    private HuiFuBaseResponseDTO assemblyMockCallbackDTO(HuiFuMockPayment huiFuMockPayment) {
         // 手续费先硬编码成千23
         BigDecimal feeRate = BigDecimal.valueOf(0.023);
         BigDecimal feeAmt = huiFuMockPayment.getTransAmt().multiply(feeRate).setScale(2, RoundingMode.HALF_UP);
-        return HuiFuPayCallbackDTO.builder()
-                .acctId(HuiFuConstant.ACCT_ID)
-                .acctSplitBunch(null)
-                .feeAcctId(HuiFuConstant.ACCT_ID)
-                .feeHuifuId(huiFuMockPayment.getHuiFuId())
-                .feeAmount(feeAmt.toPlainString())
-                .bankType("OTHERS")
+        // 汇付返回的字段太多了，直接魔法值吧，改不动
+        HuiFuPayCallbackResponseDTO huiFuPayCallbackResponseDTO = HuiFuPayCallbackResponseDTO.builder()
+                .acctId("A18822546")
+                .acctSplitBunch("{\"acct_infos\":[{\"acct_id\":\"A19126229\",\"div_amt\":\"0.02\",\"huifu_id\":\"6666000124879551\"}],\"fee_acct_id\":\"A19126229\",\"fee_amt\":\"0.00\",\"fee_huifu_id\":\"6666000124879551\"}")
+                .acctStat("I")
+                .atuSubMerId("553194110")
+                .avoidSmsFlag("")
+                .bagentId("6666000124683186")
                 .bankCode("SUCCESS")
+                .bankDesc("交易成功")
                 .bankMessage("交易成功")
-                .combinedPayData(null)
-                .combinedPayFeeAmt(null)
-                .delayAcctFlag(DelayAcctFlagEnum.DELAY.getFlag())
-                .endTime(DateUtil.format(LocalDateTime.now(), "yyyyMMddHHmmss"))
-                .feeFlag(FeeFlagEnum.INNER_BUCKLE.getFlag())
+                .bankOrderNo("4200001974202311305397932158")
+                .bankSeqId("442560")
+                .bankType("OTHERS")
+                .baseAcctId("A18822486")
+                .batchId("231130")
+                .channelType("U")
+                .chargeFlags("758_0")
+                .combinedpayData("[]")
+                .combinedpayFeeAmt("0.00")
+                .debitType("0")
+                .delayAcctFlag("Y")
+                .divFlag("0")
+                .endTime("20231130092615")
+                .feeAmount(feeAmt.toPlainString())
+                .feeAmt(feeAmt.toPlainString())
+                .feeFlag("2")
+                .feeFormulaInfos("[{\"fee_formula\":\"AMT*0.0023\",\"fee_type\":\"TRANS_FEE\"}]")
+                .feeRecType("1")
+                .feeType("INNER")
+                .gateId("VT")
                 .hfSeqId(huiFuMockPayment.getHfSeqId())
                 .huifuId(huiFuMockPayment.getHuiFuId())
-                .isDelayAcct(DelayAcctFlagEnum.DELAY.getFlag())
-                .isDiv("N")
+                .isDelayAcct("1")
+                .isDiv("0")
+                .merName("客思服(杭州)科技有限公司")
+                .merOrdId("P1730035457365442560")
+                .mypaytsfDiscount("0.00")
+                .needBigObject("false")
+                .notifyType("1")
+                .orgAuthNo("")
+                .orgHuifuSeqId("")
+                .orgTransDate("")
+                .outOrdId("4200001974202311305397932158")
                 .outTransId("4200001974202311305397932158")
                 .partyOrderId("03232311303397044709485")
+                .payAmt(huiFuMockPayment.getTransAmt().toPlainString())
+                .payScene("02")
+                .pospSeqId("03232311303397044709485")
+                .productId("PAYUN")
+                .refNo("092610442560")
                 .reqDate(huiFuMockPayment.getReqDate())
                 .reqSeqId(huiFuMockPayment.getReqSeqId())
-                .respCode(ResponseCodeEnum.MOCK_JSAPI_CALLBACK_SUCCESS.getCode())
-                .respDesc(ResponseCodeEnum.MOCK_JSAPI_CALLBACK_SUCCESS.getDesc())
-                .settlementAmt(null)
+                .respCode("00000000")
+                .respDesc("交易成功")
+                .riskCheckData("{}")
+                .riskCheckInfo("{}")
+                .settlementAmt(huiFuMockPayment.getTransAmt().toPlainString())
+                .subRespCode("00000000")
+                .subRespDesc("交易成功")
+                .subsidyStat("I")
+                .sysId(huiFuMockPayment.getHuiFuId())
                 .tradeType(huiFuMockPayment.getTradeType())
                 .transAmt(huiFuMockPayment.getTransAmt().toPlainString())
-                .transFeeAllowanceInfo(null)
-                .transStat(TransStatEnum.SUCCESS.getStat())
+                .transDate(huiFuMockPayment.getReqDate())
+                .transFeeAllowanceInfo("{\"actual_fee_amt\":\"0.00\",\"allowance_fee_amt\":\"0.00\",\"allowance_type\":\"0\",\"receivable_fee_amt\":\"0.00\"}")
+                .transStat("S")
+                .transTime("092610")
                 .transType(huiFuMockPayment.getTradeType())
-                .wxResponse(null).build();
+                .wxResponse("{\"bank_type\":\"OTHERS\",\"coupon_fee\":\"0.00\",\"openid\":\"o8jhot7NjCGR_eRsU1JuF7jWzdu8\",\"sub_appid\":\"wxda8819c87e1e69c8\",\"sub_openid\":\"o3geR6grjvmN33eTPFgs9Bhu9MCI\"}")
+                .build();
+        return HuiFuBaseResponseDTO.builder()
+                .respCode(ResponseCodeEnum.MOCK_JSAPI_CALLBACK_SUCCESS.getCode())
+                .respData(JSON.toJSONString(huiFuPayCallbackResponseDTO))
+                .respDesc("交易成功[000]")
+                .sign("GDlHn4FnqlycoPxL4WyVIv2UnU2RvyUfXkoO30FBoxPAWaDDIZpKRn+s6IAk4INTyVYpxYjxHkarSPZ/7JcGD5BmHBPK5zx+vIDnAPtsqTXH18Rtb5wTmva1s+RnGd5bIxD4h9xxlu6xj1iINasoc/bGR4OiHMdVUlaOZIchzRjtmgDJdkS6/StqbyKatYqckmaLlAbkKPTNfV9AkP8dJAHYEwgW4h3+ZufqG7Toxy7GCP0IBBmqoSClSNadsIHKTAOUAsyX920EPPtWn84eqrsJzEXKjcn1DhjFSmvrq14qk4FdcqzcFr8Jr9vqiviWjYTz/YUpWg6lXhjyzNDiTA==")
+                .build();
     }
 
     private void processAccountLogic(HuiFuMockPayment huiFuMockPayment) {
@@ -147,7 +245,7 @@ public class MockServiceImpl implements MockService {
         if (increaseResult < 1) {
             throw new RuntimeException("更新汇付延迟账户金额失败");
         }
-        log.info("汇付延迟账户：{}，增加金额：{}", huiFuId, huiFuMockPayment.getTransAmt());
+        log.info("汇付延迟账户：{}，增加金额：{}元", huiFuId, huiFuMockPayment.getTransAmt());
 
         // 2、汇付模拟的交易汇总金额增加
         HuiFuMockTransactionSummary summary = new HuiFuMockTransactionSummary();
@@ -159,23 +257,9 @@ public class MockServiceImpl implements MockService {
         huiFuMockTransactionSummaryRepository.save(summary);
     }
 
-    private void sendMQForMockUserPaySuccessNotify(Long paymentId) {
-        // 因为测试环境的延迟消息等级是30s、1min起步，真实用户也就三五秒支付完毕有回调通知
-        // 这里简单处理睡3s，然后发送MQ消息
-        log.info("支付单：{}，等待用户支付中...", paymentId);
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            log.error("睡眠异常", e);
-        }
-        log.info("支付单：{}，用户支付完毕，", paymentId);
-
-
-
-    }
-
     /**
      * 保存模拟支付单
+     *
      * @param requestData
      * @param responseData
      */
@@ -213,10 +297,10 @@ public class MockServiceImpl implements MockService {
                 .bankCode("SUCCESS")
                 .bankMessage("成功")
                 .delayAcctFlag("Y")
-                .hfSeqId(HuiFuGenerateSeqIdUtil.generateJsapiSeqId())
+                .hfSeqId(HuiFuGenerateSeqIdUtil.generateHfSeqId())
                 .huifuId(requestData.getHuiFuId())
                 .partyOrderId(null)
-                .payInfo(null)
+                .payInfo("{\\\"appId\\\":\\\"wxda8819c87e1e69c8\\\",\\\"timeStamp\\\":\\\"1701493917\\\",\\\"nonceStr\\\":\\\"cfcbab82534343a3906f0de97c6107c6\\\",\\\"package\\\":\\\"prepay_id=wx021311571756632c21ee2d94c8e4410000\\\",\\\"signType\\\":\\\"RSA\\\",\\\"paySign\\\":\\\"IWa/fCrWQj2DvzHJRutYekIKxJfxZ/EU3/KFepIkWEjUg/sZ1VarUuQ25jqaiY7Iv6wrjv6uulQIdk+QQr2xarlJowBJ1e1VsHUCm5g2lXBsEzHV4v82Xogb1XYgZ2M96TbNdqNNqMcdhgNS4WNgsGeDEAsGx9pHbOLgjNmxpALgzQ6cBXSkaKp/UJPpsqRrbor7JCsDu9KR3v63MZCG571ulIpUH6W7ol8cBccx0kVlhbquMkjMkH83hi8inlrSJXi6+Q/zvimxDehPHm+dfoxUJGqLvygSkOaSzWLuqCoPATwfrhzXSTjnWJRUmctaDb00VGL99EPwufN8TVAOBw==\\\"}")
                 .reqDate(requestData.getReqDate())
                 .reqSeqId(requestData.getReqSeqId())
                 .respCode(ResponseCodeEnum.MOCK_JSAPI_SUCCESS.getCode())

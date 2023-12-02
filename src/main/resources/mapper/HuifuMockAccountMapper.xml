@@ -3,7 +3,7 @@
 <mapper namespace="com.cosfo.mockhuifu.mapper.HuifuMockAccountMapper">
 
     <update id="increaseDelayedAmt">
-        update huifu_mock_account
+        update hui_fu_mock_account
         set delayed_amt = delayed_amt + #{increaseDelayedAmt}
         where huifu_id = #{id} and delayed_amt + #{increaseDelayedAmt} >= 0
     </update>

@@ -35,3 +35,6 @@ spring:
     maxWait: 60000
     timeBetweenEvictionRunsMillis: 60000
     minEvictableIdleTimeMillis: 300000
+
+callback:
+  maxRetryCnt: 2

@@ -22,5 +22,9 @@ public class HuiFuConstant {
      */
     public static final String ACCT_ID = "A18822486";
 
+    /**
+     * 汇付回调成功前缀
+     */
+    public static final String JSAPI_CALLBACK_SUCCESS_PREFIX = "RECV_ORD_ID_";
 
 }

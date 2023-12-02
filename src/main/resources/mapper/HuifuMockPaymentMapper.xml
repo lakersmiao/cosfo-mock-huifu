@@ -3,7 +3,7 @@
 <mapper namespace="com.cosfo.mockhuifu.mapper.HuifuMockPaymentMapper">
 
     <update id="updateStatusById">
-        update huifu_mock_payment
+        update hui_fu_mock_payment
         set trans_stat = #{finalStat}
         where trans_stat = #{orgStat}
     </update>
