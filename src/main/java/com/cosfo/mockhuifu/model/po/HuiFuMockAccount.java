@@ -6,8 +6,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import lombok.Getter;
-import lombok.Setter;
+
+import lombok.*;
 
 /**
  * <p>
@@ -17,8 +17,10 @@ import lombok.Setter;
  * @author George
  * @since 2023-11-29
  */
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @TableName("hui_fu_mock_account")
 public class HuiFuMockAccount implements Serializable {
 

@@ -22,6 +22,7 @@ import com.cosfo.mockhuifu.model.po.HuiFuMockTransactionSummary;
 import com.cosfo.mockhuifu.repository.HuiFuMockTransactionSummaryRepository;
 import com.cosfo.mockhuifu.repository.HuifuMockAccountRepository;
 import com.cosfo.mockhuifu.repository.HuifuMockPaymentRepository;
+import com.cosfo.mockhuifu.service.HuiFuMockAccountService;
 import com.cosfo.mockhuifu.service.MockService;
 import com.github.rholder.retry.RetryerBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +60,8 @@ public class MockServiceImpl implements MockService {
     private HuiFuMockTransactionSummaryRepository huiFuMockTransactionSummaryRepository;
     @Resource
     private TransactionTemplate transactionTemplate;
+    @Resource
+    private HuiFuMockAccountService huiFuMockAccountService;
 
     @Value("${callback.maxRetryCnt}")
     private Integer maxRetryCnt;
@@ -239,8 +242,9 @@ public class MockServiceImpl implements MockService {
 
     private void processAccountLogic(HuiFuMockPayment huiFuMockPayment) {
         String huiFuId = huiFuMockPayment.getHuiFuId();
-
-        // 1、汇付账户金额增加
+        // 1、初始化汇付账户
+        huiFuMockAccountService.initAccount(huiFuId);
+        // 2、汇付账户金额增加
         int increaseResult = huifuMockAccountRepository.increaseDelayedAmt(huiFuId, huiFuMockPayment.getTransAmt());
         if (increaseResult < 1) {
             throw new RuntimeException("更新汇付延迟账户金额失败");
