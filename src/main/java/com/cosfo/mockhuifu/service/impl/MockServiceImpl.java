@@ -86,7 +86,7 @@ public class MockServiceImpl implements MockService {
         ThreadUtil.execAsync(() -> {
             asyncMockUserPaySuccessNotify(paymentId);
         });
-        return response;
+        return huiFuResponseDTO;
     }
 
 
