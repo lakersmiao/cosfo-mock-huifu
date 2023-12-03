@@ -301,7 +301,7 @@ public class MockServiceImpl implements MockService {
                 .bankCode("SUCCESS")
                 .bankMessage("成功")
                 .delayAcctFlag("Y")
-                .hfSeqId(HuiFuGenerateSeqIdUtil.generateHfSeqId())
+                .hfSeqId(HuiFuGenerateSeqIdUtil.generateJsapiHfSeqId())
                 .huifuId(requestData.getHuiFuId())
                 .partyOrderId(null)
                 .payInfo("{\"appId\":\"wxda8819c87e1e69c8\",\"timeStamp\":\"1701493917\",\"nonceStr\":\"cfcbab82534343a3906f0de97c6107c6\",\"package\":\"prepay_id=wx021311571756632c21ee2d94c8e4410000\",\"signType\":\"RSA\",\"paySign\":\"IWa/fCrWQj2DvzHJRutYekIKxJfxZ/EU3/KFepIkWEjUg/sZ1VarUuQ25jqaiY7Iv6wrjv6uulQIdk+QQr2xarlJowBJ1e1VsHUCm5g2lXBsEzHV4v82Xogb1XYgZ2M96TbNdqNNqMcdhgNS4WNgsGeDEAsGx9pHbOLgjNmxpALgzQ6cBXSkaKp/UJPpsqRrbor7JCsDu9KR3v63MZCG571ulIpUH6W7ol8cBccx0kVlhbquMkjMkH83hi8inlrSJXi6+Q/zvimxDehPHm+dfoxUJGqLvygSkOaSzWLuqCoPATwfrhzXSTjnWJRUmctaDb00VGL99EPwufN8TVAOBw==\"}")

@@ -17,5 +17,4 @@ public interface MockService {
      * @return
      */
     HuiFuResponseDTO mockJsApi(HuiFuRequestDTO<HuiFuPayRequestDTO> payRequestDTO);
-
 }

@@ -13,9 +13,14 @@ public class HuiFuConstant {
     public static final String PRODUCT_ID = "PAYUN";
 
     /**
-     * 汇付全局流水号前缀
+     * 汇付JSAPI全局流水号前缀
      */
     public static final String HF_JSAPI_SEQ_ID_PREFIX = "MK002900";
+
+    /**
+     * 汇付JSAPI全局流水号前缀
+     */
+    public static final String HF_REFUND_SEQ_ID_PREFIX = "MK003100";
 
     /**
      * 收款账户号

@@ -21,6 +21,11 @@ public enum ResponseCodeEnum {
      * jsapi模拟交易成功
      */
     MOCK_JSAPI_CALLBACK_SUCCESS("00000000", "模拟交易成功"),
+
+    /**
+     * 退款交易处理中
+     */
+    MOCK_REFUND_PROCESSING("00000100", "交易处理中"),
     ;
 
     /**

@@ -7,8 +7,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import lombok.Getter;
-import lombok.Setter;
+
+import lombok.*;
 
 /**
  * <p>
@@ -18,9 +18,11 @@ import lombok.Setter;
  * @author George
  * @since 2023-11-29
  */
-@Getter
-@Setter
+@Data
 @TableName("hui_fu_mock_refund")
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class HuiFuMockRefund implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -42,6 +44,12 @@ public class HuiFuMockRefund implements Serializable {
      */
     @TableField("req_seq_id")
     private String reqSeqId;
+
+    /**
+     * 全局流水号
+     */
+    @TableField("hf_seq_id")
+    private String hfSeqId;
 
     /**
      * 汇付id
@@ -66,6 +74,18 @@ public class HuiFuMockRefund implements Serializable {
      */
     @TableField("org_req_seq_id")
     private String orgReqSeqId;
+
+    /**
+     * 交易状态
+     */
+    @TableField("trans_stat")
+    private String transStat;
+
+    /**
+     * 回调地址
+     */
+    @TableField("notify_url")
+    private String notifyUrl;
 
     /**
      * create time

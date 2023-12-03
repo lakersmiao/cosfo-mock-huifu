@@ -3,8 +3,6 @@ package com.cosfo.mockhuifu.repository;
 import com.cosfo.mockhuifu.model.po.HuiFuMockPayment;
 import com.baomidou.mybatisplus.extension.service.IService;
 
-import java.math.BigDecimal;
-
 /**
  * <p>
  * 汇付模拟支付单 服务类
@@ -23,4 +21,13 @@ public interface HuifuMockPaymentRepository extends IService<HuiFuMockPayment> {
      * @return
      */
     int updateStatusById(Long paymentId, String orgStat, String finalStat);
+
+    /**
+     * 根据请求日期和请求流水号查询
+     * @param orgReqDate
+     * @param orgReqSeqId
+     * @param stat
+     * @return
+     */
+    HuiFuMockPayment queryByReqDateAndReqSeqId(String orgReqDate, String orgReqSeqId, String stat);
 }
