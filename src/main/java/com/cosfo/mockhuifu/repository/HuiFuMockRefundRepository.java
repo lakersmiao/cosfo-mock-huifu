@@ -25,4 +25,13 @@ public interface HuiFuMockRefundRepository extends IService<HuiFuMockRefund> {
      * @return
      */
     BigDecimal queryTotalRefundAmtByReqDateAndReqSeqId(String orgReqDate, String orgReqSeqId, String stat);
+
+    /**
+     * 更新状态
+     * @param refundId
+     * @param orgStat
+     * @param finalStat
+     * @return
+     */
+    int updateStatusById(Long refundId, String orgStat, String finalStat);
 }

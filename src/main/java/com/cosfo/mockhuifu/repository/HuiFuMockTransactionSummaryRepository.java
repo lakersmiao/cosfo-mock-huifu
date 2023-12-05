@@ -3,6 +3,8 @@ package com.cosfo.mockhuifu.repository;
 import com.cosfo.mockhuifu.model.po.HuiFuMockTransactionSummary;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.math.BigDecimal;
+
 /**
  * <p>
  * 汇付模拟交易汇总 服务类
@@ -13,4 +15,12 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface HuiFuMockTransactionSummaryRepository extends IService<HuiFuMockTransactionSummary> {
 
+    /**
+     * 更新延迟户金额
+     * @param reqDate
+     * @param reqSeqId
+     * @param amt
+     * @return
+     */
+    int increaseDelayedAmt(String reqDate, String reqSeqId, BigDecimal amt);
 }

@@ -1,6 +1,7 @@
 package com.cosfo.mockhuifu.model.dto.request;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,54 +21,55 @@ public class HuiFuRefundRequestDTO {
     /**
      * 汇付id
      */
-    @JSONField(name = "huifu_id")
+    @JsonProperty("huifu_id")
     private String huiFuId;
 
     /**
      * 回调地址
      */
-    @JSONField(name = "notify_url")
+    @JsonProperty("notify_url")
     private String notifyUrl;
 
     /**
      * 退款金额
      */
-    @JSONField(name = "order_amt")
+    @JsonProperty("ord_amt")
     private String orderAmt;
 
     /**
      * 原交易请求日期
      */
-    @JSONField(name = "org_req_date")
+    @JsonProperty("org_req_date")
     private String orgReqDate;
 
     /**
      * 原交易请求流水号
      */
-    @JSONField(name = "org_req_seq_id")
+    @JsonProperty("org_req_seq_id")
     private String orgReqSeqId;
 
     /**
      * 原交易全局流水号
      */
-    @JSONField(name = "org_hf_seq_id")
+    @JsonProperty("org_hf_seq_id")
     private String orgHfSeqId;
 
     /**
      * 退款请求日期
      */
-    @JSONField(name = "req_date")
+    @JsonProperty("req_date")
     private String reqDate;
 
     /**
      * 退款请求流水号
      */
-    @JSONField(name = "req_seq_id")
+    @JsonProperty("req_seq_id")
     private String reqSeqId;
 
     /**
      * 全局流水号
      */
-    @JSONField(name = "hf_seq_id")
+    @JsonProperty("hf_seq_id")
     private String hfSeqId;
+
 }

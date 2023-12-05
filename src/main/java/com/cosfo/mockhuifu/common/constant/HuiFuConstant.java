@@ -30,6 +30,6 @@ public class HuiFuConstant {
     /**
      * 汇付回调成功前缀
      */
-    public static final String JSAPI_CALLBACK_SUCCESS_PREFIX = "RECV_ORD_ID_";
+    public static final String CALLBACK_SUCCESS_PREFIX = "RECV_ORD_ID_";
 
 }

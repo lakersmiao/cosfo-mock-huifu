@@ -26,6 +26,11 @@ public enum ResponseCodeEnum {
      * 退款交易处理中
      */
     MOCK_REFUND_PROCESSING("00000100", "交易处理中"),
+
+    /**
+     * 退款模拟交易成功
+     */
+    MOCK_REFUND_CALLBACK_SUCCESS("00000000", "模拟交易成功"),
     ;
 
     /**

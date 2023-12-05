@@ -4,7 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
-import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
 import com.cosfo.mockhuifu.common.constant.HuiFuConstant;
 import com.cosfo.mockhuifu.common.enums.DelayAcctFlagEnum;
@@ -28,7 +27,6 @@ import com.github.rholder.retry.RetryerBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.entity.ContentType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -152,7 +150,7 @@ public class MockServiceImpl implements MockService {
                 .form(responseData)
                 .execute();
         String callBackResponse = response.body();
-        Boolean callBackSuccess = StringUtils.equals(callBackResponse, HuiFuConstant.JSAPI_CALLBACK_SUCCESS_PREFIX + huiFuMockPayment.getReqSeqId());
+        Boolean callBackSuccess = StringUtils.equals(callBackResponse, HuiFuConstant.CALLBACK_SUCCESS_PREFIX + huiFuMockPayment.getReqSeqId());
         log.info("模拟支付单：{}，回调商城：{}，返回参数：{}", huiFuMockPayment.getReqSeqId(), callBackSuccess ? "成功" : "失败", callBackResponse);
         return callBackSuccess;
     }

@@ -18,7 +18,7 @@ import java.math.BigDecimal;
  * @since 2023-11-29
  */
 @Service
-public class HuifuMockAccountRepositoryImpl extends ServiceImpl<HuifuMockAccountMapper, HuiFuMockAccount> implements HuifuMockAccountRepository {
+public class HuiFuMockAccountRepositoryImpl extends ServiceImpl<HuifuMockAccountMapper, HuiFuMockAccount> implements HuifuMockAccountRepository {
 
     @Resource
     private HuifuMockAccountMapper huiFuMockAccountMapper;

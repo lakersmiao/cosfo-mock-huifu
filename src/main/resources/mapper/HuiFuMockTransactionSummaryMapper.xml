@@ -2,4 +2,9 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.cosfo.mockhuifu.mapper.HuiFuMockTransactionSummaryMapper">
 
+    <update id="increaseDelayedAmt">
+        update hui_fu_mock_transaction_summary
+        set delayed_amt = delayed_amt - #{amt}
+        where org_req_seq_id = #{reqSeqId} and org_req_date = #{reqDate} and delayed_amt + #{amt} >= 0
+    </update>
 </mapper>

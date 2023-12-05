@@ -38,6 +38,12 @@ public class HuiFuMockTransactionSummary implements Serializable {
     private String orgReqSeqId;
 
     /**
+     * 原交易请求日期
+     */
+    @TableField("org_req_date")
+    private String orgReqDate;
+
+    /**
      * 原始金额
      */
     @TableField("org_amt")

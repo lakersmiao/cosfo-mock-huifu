@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cosfo.mockhuifu.mapper.HuiFuMockRefundMapper">
+
+    <update id="updateStatusById">
+        update hui_fu_mock_payment
+        set trans_stat = #{finalStat}
+        where trans_stat = #{orgStat}
+    </update>
+</mapper>
